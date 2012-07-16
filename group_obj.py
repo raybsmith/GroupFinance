@@ -31,20 +31,26 @@ class Group:
 
     def add_transaction(self, payer, others, total, split):
         """
-        Store a transaction -- note that the payee is owed by the
+        Store a transaction -- note that the payer is owed by the
         others in the group.
-        * Payer -- string -- name of person that payed for this
+        * Payee -- string -- name of person that payed for this
             transaction
-        * others -- array, strings -- names of people involved
+        * others -- string/array, strings -- if "ALL", then everyone is
+            involved, otherwise, names of people involved
         * total -- float -- total amount
-        * split -- string/array,floats -- if "even", split costs
+        * split -- string/array, floats -- if "even", split costs
             evenly, if an array of floats, then the array should
             sum to the total and be an array of how much each
             person owes (zeros for people not involved).
         """
-        # Numerical indices for the payee and others
+        # Numerical indices for the payer and others
         payer = self.indices[payer]
-        others = [self.indices[other] for other in others]
+        if others == "ALL":
+            # Everyone's involved in this transaction
+            others = self.indices.values()
+        else:
+            # Divide only among the people involved
+            others = [self.indices[other] for other in others]
         # Vector of the debts
         debts = np.array( np.zeros((self.N)) )
         # If this bill is split evenly among those involved
@@ -57,7 +63,7 @@ class Group:
             for person in others:
                 debts[person] = split[person]
         # Adjust the payment array.
-        # The debt array represents debts owed to the payee.
+        # The debt array represents debts owed to the payer.
         self.paymat[:, payer] += debts
 
     def add_person(self, new_name, old_debt = None):
