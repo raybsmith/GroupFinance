@@ -29,11 +29,11 @@ class Group:
             self.indices[self.names[indx]] = indx
         self.paymat = np.array( np.zeros((self.N,self.N)) )
 
-    def add_transaction(self, payee, others, total, split):
+    def add_transaction(self, payer, others, total, split):
         """
         Store a transaction -- note that the payee is owed by the
         others in the group.
-        * Payee -- string -- name of person that payed for this
+        * Payer -- string -- name of person that payed for this
             transaction
         * others -- array, strings -- names of people involved
         * total -- float -- total amount
@@ -43,7 +43,7 @@ class Group:
             person owes (zeros for people not involved).
         """
         # Numerical indices for the payee and others
-        payee = self.indices[payee]
+        payer = self.indices[payer]
         others = [self.indices[other] for other in others]
         # Vector of the debts
         debts = np.array( np.zeros((self.N)) )
@@ -58,7 +58,7 @@ class Group:
                 debts[person] = split[person]
         # Adjust the payment array.
         # The debt array represents debts owed to the payee.
-        self.paymat[:, payee] += debts
+        self.paymat[:, payer] += debts
 
     def add_person(self, new_name, old_debt = None):
         """
@@ -97,8 +97,8 @@ class Group:
         # Make sure we have something to do.
         if not debt_forgiven and not debt_even \
                 and not debt_absorber:
-            raise Exception("Can't remove someone without \
-                    instructions on how to do so.")
+            raise Exception("Can't remove someone without " +
+                    "instructions on how to do so.")
         # Numerical indices.
         # Get the person's number.
         leavingnum = self.indices[leaving]
@@ -138,6 +138,17 @@ class Group:
         George -- this can be reduced to three payments rather
         than four).
         """
+
+        # Make a list of total payments debts and credits per
+        # person initially. This will verify the simplification
+        # process didn't actually change anything.
+        balances_init = np.array( np.zeros((self.N)) )
+        for debtor in xrange(self.N):
+            balances_init[debtor] -= \
+                    np.sum(self.paymat[debtor, :])
+        for creditor in xrange(self.N):
+            balances_init[creditor] += \
+                    np.sum(self.paymat[:, creditor])
 
         # Systematically go through and eliminate all chains.
         # Consider each debtor.
@@ -230,7 +241,7 @@ class Group:
                     # This debtor's creditors.
                     creditors2 = np.nonzero(self.paymat[debtor2, :])[0]
                     # Generate a list of shared creditors?
-                    shared = np.intersect1d(creditors1,\
+                    shared = np.intersect1d(creditors1,
                             creditors2)
                     # If there are at least 2 shared.
                     if len(shared) >= 2:
@@ -240,11 +251,13 @@ class Group:
                         shared1 = shared[0]
                         shared2 = shared[1]
                         # Find the lowest debt in the 'rectangle'.
-                        min_flag = np.argmin( np.array([\
-                                self.paymat[debtor1, shared1],\
-                                self.paymat[debtor1, shared2],\
-                                self.paymat[debtor2, shared1],\
+                        min_flag = np.argmin( np.array([
+                                self.paymat[debtor1, shared1],
+                                self.paymat[debtor1, shared2],
+                                self.paymat[debtor2, shared1],
                                 self.paymat[debtor2, shared2]]) )
+#                        print "PRE-paymat:"
+#                        print self.paymat
                         # Get rid of one of them
                         if min_flag == 0:
                             adj = self.paymat[debtor1, shared1]
@@ -256,8 +269,8 @@ class Group:
                             adj = self.paymat[debtor1, shared2]
                             self.paymat[debtor1, shared1] += adj
                             self.paymat[debtor1, shared2] = 0
-                            self.paymat[debtor2, shared1] += adj
-                            self.paymat[debtor2, shared2] -= adj
+                            self.paymat[debtor2, shared1] -= adj
+                            self.paymat[debtor2, shared2] += adj
                         elif min_flag == 2:
                             adj = self.paymat[debtor1, shared2]
                             self.paymat[debtor1, shared1] += adj
@@ -270,9 +283,36 @@ class Group:
                             self.paymat[debtor1, shared2] += adj
                             self.paymat[debtor2, shared1] += adj
                             self.paymat[debtor2, shared2] = 0
+#                        print "POST-paymat:"
+#                        print self.paymat
             count += 1
         if count == max_count:
             print "Ahh, iteration-max!"
+
+        # The final list of balances. A person's total received
+        # payments - debts should be the same before and after
+        # simplification.
+        balances_final = np.array( np.zeros((self.N)) )
+        for debtor in xrange(self.N):
+            balances_final[debtor] -= \
+                    np.sum(self.paymat[debtor, :])
+        for creditor in xrange(self.N):
+            balances_final[creditor] += \
+                    np.sum(self.paymat[:, creditor])
+        print "Initial / final personal balances [$]:"
+        for person in self.names:
+            balance_i = balances_init[self.indices[person]]
+            balance_f = balances_final[self.indices[person]]
+            print "%s:  %5.2f / %5.2f" %(person, balance_i, balance_f)
+        # We'll accept a change of less than a penny or so in
+        # total balance for an individual.
+        tol = 1e-3
+        for person in xrange(self.N):
+            if abs(balances_init[person] - \
+                    balances_final[person]) > tol:
+                raise Exception("Simplify() script changed the " +
+                    "individual balances. There's a problem " +
+                    "with the algorithm.")
 
 
 #                    for ower_owes in xrange(self.N):
