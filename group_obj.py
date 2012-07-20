@@ -28,6 +28,16 @@ class Group:
         for indx in xrange(self.N):
             self.indices[self.names[indx]] = indx
         self.paymat = np.array( np.zeros((self.N,self.N)) )
+        # Store a list of transactions. This will be a dictionary of 
+        self.transactions = []
+
+    def store_new_transaction(self, payer, others, total, split):
+        new_transaction = {
+                "payer" : payer,
+                "others" : others,
+                "total" : total,
+                "split" : split }
+        self.transactions.append(new_transaction)
 
     def add_transaction(self, payer, others, total, split):
         """
@@ -72,6 +82,13 @@ class Group:
         * old_debt -- array,floats -- the amounts this person owes
             to the others
         """
+        # TODO -- make add/remove person carry out a simplify,
+        # regenerate the list of transactions from the simplified
+        # paymat, and thus maintain all the "data" in
+        # self.transactions.
+        # Optional -- functionality to add/remove multiple people
+        # at the same time?
+
         # Extra person -- add to the total.
         self.N += 1
         # Add this person to the list of people-indices
@@ -132,7 +149,18 @@ class Group:
         else:
             debts = self.paymat[leaving, :]
             self.paymat[debt_absorber, :] += debts
+        # TODO -- Option for them to simply buy out. Run a
+        # simplify (or not), have them pay their entire debt to
+        # a given person (anyone), then fix up the transactions
+        # accordingly.
 
+    def generate_paymat(self):
+        """
+        Generate a paymatrix with the current transaction
+        list.
+        """
+        self.paymat = 
+        for 
     def simplify(self):
         """
         This function takes paymat and reduces it such that there
