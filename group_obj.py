@@ -41,8 +41,8 @@ class Group:
 
     def add_transaction(self, payer, others, total, split):
         """
-        Store a transaction -- note that the payer is owed by the
-        others in the group.
+        Add a transaction to the current paymat -- note that the
+        payer is owed by the others in the group.
         * Payee -- string -- name of person that payed for this
             transaction
         * others -- string/array, strings -- if "ALL", then everyone is
@@ -135,8 +135,9 @@ class Group:
         self.N -= 1
         # If the debt from this person is simply being forgiven.
         if debt_forgiven:
-            np.delete(self.paymat, leaving, axis=0)
-            np.delete(self.paymat, leaving, axis=1)
+            # We'll just end up deleting these entries from the
+            # paymat.
+            pass
         # If the debt is being divided evenly.
         elif debt_even:
             # How much leaving person owed to each person.
@@ -149,18 +150,26 @@ class Group:
         else:
             debts = self.paymat[leaving, :]
             self.paymat[debt_absorber, :] += debts
+        # In any case, they no longer need entries in paymat.
+        np.delete(self.paymat, leaving, axis=0)
+        np.delete(self.paymat, leaving, axis=1)
         # TODO -- Option for them to simply buy out. Run a
         # simplify (or not), have them pay their entire debt to
         # a given person (anyone), then fix up the transactions
         # accordingly.
 
-    def generate_paymat(self):
-        """
-        Generate a paymatrix with the current transaction
-        list.
-        """
-        self.paymat = 
-        for 
+#    def generate_paymat(self):
+#        """
+#        Generate a paymatrix with the current transaction
+#        list.
+#        """
+#        for transaction in self.transactions
+#            self.add_transaction(
+#                    transaction["payer"],
+#                    transaction["others"],
+#                    transaction["total"],
+#                    transaction["split"])
+
     def simplify(self):
         """
         This function takes paymat and reduces it such that there
@@ -172,6 +181,15 @@ class Group:
         George -- this can be reduced to three payments rather
         than four).
         """
+
+#        # First, generate an unsimplified payment matrix from the
+#        # list of transactions.
+#        for transaction in self.transactions:
+#            self.add_transaction(
+#                    transaction["payer"],
+#                    transaction["others"],
+#                    transaction["total"],
+#                    transaction["split"])
 
         # Make a list of total payments debts and credits per
         # person initially. This will verify the simplification
@@ -348,50 +366,3 @@ class Group:
                     "individual balances. There's a problem " +
                     "with the algorithm.")
 
-
-#                    for ower_owes in xrange(self.N):
-#                        if self.paymat[debtor_owes, ower_owes]:
-#                            # Eliminate.
-#                            # See which debt is smaller.
-#                            low_ind = numpy.argmin(\
-#                                self.paymat[debtor, debtor_owes],
-#                                self.paymat[debtor_owes, ower_owes]
-#                            # The debtor owes "debtor_owes" more than
-#                            # "debtor_owes" owes someone.
-#                            if low_ind == 1:
-#                            else:
-#                            # break out to the original looping
-#                            break
-#
-#        # While there are still chains, keep reducing.
-#        has_chains = True
-#        while has_chains:
-##            # While there are still double-owes (dha ~ double
-##            # headed owe-arrow), reduce.
-##            has_dha = True
-##            while has_dha:
-#            # Eliminate all the double-owes.
-#            # Look at all the debtors.
-#            for debtor in xrange(self.N):
-#                # Look at the people they owe money to.
-#                for owes_to in xrange(self.N):
-#                    # If they owe each other, fix it.
-#                    if self.paymat[debtor, owes_to] \
-#                        && self.paymat[owes_to, debtor]:
-#                            # Who owes more?
-#                            high_flag = numpy.argmax(\
-#                                self.paymat[debtor, owes_to],
-#                                self.paymat[owes_to, debtor])
-#                            # Make it so only one owes the other.
-#                            if high_flag == 0:
-#                                self.paymat[debtor, owes_to] \
-#                                    -= self.paymat[owes_to, debtor]
-#                                self.paymat[owes_to, debtor] = 0
-#                            else:
-#                                self.paymat[owes_to, debtor] \
-#                                    -= self.paymat[debtor, owes_to]
-#                                self.paymat[debtor, owes_to] = 0
-#            # Get rid of chains.
-#            # Check for chains.
-#            for debtor in xrange(self.N):
-#                for owes_to in xrange(self.N):

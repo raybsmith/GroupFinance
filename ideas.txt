@@ -1,0 +1,9 @@
+* Handle the finances for the group?
+    - Liability issues?
+    - ``Fair Pay'' repayment -- pay back to the group, and it
+      distributed it evenly across, so that one person doesn't
+      end up getting not paid back because of one person failing
+      to repay
+    - Possibly link to Square
+* Email reminders
+* Spreadsheet import of list of expenses (approximate name matching?).
