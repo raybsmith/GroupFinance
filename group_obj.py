@@ -67,7 +67,7 @@ class Group:
                 person_assets.append(transaction_ind)
             # If the person was involved as an "other", they
             # "owe" for the transaction.
-            elif name is in transaction["others"]:
+            elif name in transaction["others"]:
                 person_debts.append(transaction_ind)
         return person_debts, person_assets
 
@@ -146,7 +146,7 @@ class Group:
         if old_debt is not None:
             # The vector of how much the person owes people
             debts_vec = np.zeros((self.N))
-            for (other, amount) in old_debt.items()
+            for (other, amount) in old_debt.items():
                 # The index of the person the new person owes.
                 other_ind = self.indices[other]
                 # Setting the debt vector by index.
@@ -300,7 +300,7 @@ class Group:
         # First, make the matrix to be filled in.
         self.paymat = np.array( np.zeros((self.N,self.N)) )
         # Populate it with the saved transactions.
-        for transaction in self.transactions
+        for transaction in self.transactions:
             self.add_transaction(
                     transaction["payer"],
                     transaction["others"],
