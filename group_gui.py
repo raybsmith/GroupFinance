@@ -32,15 +32,13 @@ class main_interface:
         # Keep track of the file that's currently being edited.
         self.current_file_name = Tk.StringVar()
         self.current_file_name.set("None")
-        self.current_file = None
+        self.current_obj = None
         self.file_label_pre = Tk.Label(self.frame,
                 text="Current File:")
         self.file_label_pre.grid(row=1, column=1)
         self.file_label = Tk.Label(self.frame,
                 textvariable = self.current_file_name)
         self.file_label.grid(row=1, column=2)
-#        # Keep track of a list of transactions.
-#        self.transactions = []
 
         # Creating a menu bar in the current top level window (root).
         self.menubar = Tk.Menu(self.master)
@@ -70,7 +68,7 @@ class main_interface:
         # Relevant buttons
         self.btn_show_people = Tk.Button(self.frame,
                 text="Show Current People",
-                command=self.show_current_list)
+                command=self.open_current_list_window)
         self.btn_show_people.grid(row=2, column=1)
         self.btn_add_person = Tk.Button(self.frame,
                 text="Add person",
@@ -91,7 +89,7 @@ class main_interface:
             return
         name = self.current_file_name
         f = open(name, "wb")
-        pickle.dump(self.current_file, f)
+        pickle.dump(self.current_obj, f)
         f.close()
         return
 
@@ -99,18 +97,18 @@ class main_interface:
         name = tkFileDialog.asksaveasfilename(
                 initialfile='group.p')
         if name != '':
-            self.current_file_name.set(name)
+            self.current_file_name.set(name.split('/')[-1])
             f = open(name, "wb")
-            pickle.dump(self.current_file, f)
+            pickle.dump(self.current_obj, f)
             f.close()
         return
 
     def load(self):
         name = tkFileDialog.askopenfilename()
         if name != '':
-            self.current_file_name.set(name)
+            self.current_file_name.set(name.split('/')[-1])
             f = open(name, "rb")
-            self.current_file = pickle.load(f)
+            self.current_obj = pickle.load(f)
             f.close()
         return
 
@@ -204,7 +202,7 @@ class main_interface:
             return
         def create_group(*args):
             if new_name_list != []:
-                self.current_file = \
+                self.current_obj = \
                         group_obj.Group(new_name_list)
                 self.saveas()
                 new_group_win.destroy()
@@ -230,6 +228,11 @@ class main_interface:
                 text="Finish up and create the file!",
                 command=create_group)
         done_button.grid(row=4, column=1, columnspan=1)
+        # Button to cancel group creation.
+        cancel_button = Tk.Button(new_gr_frame,
+                text="Cancel",
+                command=new_group_win.destroy)
+        cancel_button.grid(row=13, column=1)
 
         # "Focus" the new name entry field so less clicking.
         new_name_entry.focus()
@@ -237,11 +240,64 @@ class main_interface:
         new_name_entry.bind('<Return>', new_name)
         return
 
-    def show_current_list(self):
-        print "TODO"
+    def open_current_list_window(self):
+        # Open a new window for creation of the group.
+        self.current_names_win = Tk.Toplevel(self.master)
+        self.current_names_win.title("Current People")
+        # Set up the overall frame for that window.
+        self.cur_names_frame = Tk.Frame(
+                self.current_names_win, padx=10, pady=10)
+        self.cur_names_frame.grid(
+                column=0, row=0, sticky=("N,S,W,E"))
+        self.cur_names_frame.columnconfigure(0, weight=1)
+        self.cur_names_frame.rowconfigure(0, weight=1)
+        # Make the listbox in which to show the names.
+        self.cur_names_listboxframe = Tk.Frame(self.cur_names_frame,
+                padx=5, pady=5)
+        self.cur_names_listboxframe.pack()
+        scrollbary = Tk.Scrollbar(self.cur_names_listboxframe,
+                orient="vertical")
+        scrollbarx = Tk.Scrollbar(self.cur_names_listboxframe,
+                orient="horizontal")
+        self.cur_names_listbox = Tk.Listbox(self.cur_names_listboxframe,
+                yscrollcommand=scrollbary.set,
+                xscrollcommand=scrollbary.set)
+        scrollbary.config(command=self.cur_names_listbox.yview)
+        scrollbarx.config(command=self.cur_names_listbox.xview)
+        scrollbary.pack(side="right", fill="y")
+        scrollbarx.pack(side="bottom", fill="x")
+        self.cur_names_listbox.pack(side="left", fill="both", expand=1)
+        # Set up the actual list to display.
+        self.update_current_display_list()
+        return
+    def update_current_display_list(self):
+        try:
+            # XXX -- delete everything -- syntax is wrong here
+            self.cur_names_listbox.delete(0,-1)
+            # Repopulate with current list.
+            for name in self.current_obj.names:
+                self.cur_names_listbox.insert("end", name)
+        except:
+            pass
         return
     def add_person(self):
         print "TODO"
+        # XXX -- Fix this after making interface to add a
+        # transaction.
+        # New window to enter the name.
+        add_person_win = Tk.Toplevel(self.master)
+        add_person_win.title("Add a Person")
+        add_person_frame = Tk.Frame(add_person_win,
+                padx=10, pady=10)
+        add_person_frame.grid(column=0, row=0, sticky=("N,S,W,E"))
+        add_person_frame.columnconfigure(0, weight=1)
+        add_person_frame.row_configure(0, weight=1)
+        # Text explaining what to do
+        explain_label = Tk.Label(add_person_frame,
+                text="Enter the name of the person to " +\
+                        "add to the group.")
+        explain_label.grid(row=1, column=1,
+                columnspan=4
         return
     def callback(self):
         print "called the callback"

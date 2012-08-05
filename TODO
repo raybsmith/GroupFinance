@@ -1,4 +1,4 @@
-[GUI-TODO]
+[TODO-GUI]
 * Graphical interface to display current list of transactions.
   - Display total as sum of split if a non-"even" split
 * For remove_person/debt_settled, first print total debt then
@@ -6,7 +6,12 @@
 * Add utility to do partial repayments -- implement this as
   an extra transaction having 2 people in transaction with payer
   not involved.
-[Engine-TODO]
+* Fix self.cur_names_listbox to not be selectable and also
+  update_current_display_list for delete syntax.
+* Add functionality to add transactions.
+* Fix add_person after adding way to add transactions.
+
+[TODO-Engine]
 * Test function to print a person's total debt/assets right now.
 * Test remove_person functionality.
 
