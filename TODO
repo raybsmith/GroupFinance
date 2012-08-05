@@ -1,0 +1,35 @@
+[GUI-TODO]
+* Graphical interface to display current list of transactions.
+  - Display total as sum of split if a non-"even" split
+* For remove_person/debt_settled, first print total debt then
+  confirm that the "reversing" transaction should be implemented.
+* Add utility to do partial repayments -- implement this as
+  an extra transaction having 2 people in transaction with payer
+  not involved.
+[Engine-TODO]
+* Test function to print a person's total debt/assets right now.
+* Test remove_person functionality.
+
+[Optional]
+* Set gui to always pass a list of people involved in a
+  transaction and get rid of "ALL" as a possibility for "others".
+  That's nice for CLI but useless for GUI, and CLI's not terribly
+  practical for this.
+
+
+[DONE]
+* Fix adding transactions. They payer wasn't necessarily involved
+  in the transaction.
+* Move the transaction exceptions to the store_transaction
+  function. This should really be taken care of then.
+* Fix get_persons_total_debt to also return things required for
+  the other remove_person options.
+* In remove_person, add the option to "buy out". To do this, we
+  really just need a function that gets a person's total debts,
+  prints that amount. Then the leaver can pay (get paid by)
+  a particular person
+  who is the "debt_absorber" in the current implementation. But
+  not quite, because I think "debt_absorber" is broken. They
+  should absorb debts and assets.
+* Fix remove_person to work with stored transactions rather than
+  a stored payment matrix
