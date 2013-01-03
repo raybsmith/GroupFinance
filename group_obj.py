@@ -27,49 +27,103 @@ class Group:
         self.indices = {}
         for indx in xrange(self.N):
             self.indices[self.names[indx]] = indx
-        # Store a list of transactions. This will be a dictionary of 
+        # Store a list of transactions. This will be a list of
+        # dictionaries.
         self.transactions = []
 
-    def store_new_transaction(self, payer, split, others=None,
-            total=None, payer_incl=None):
-        # Run some checks to make sure it's a sane transaction.
-        if split != "even":
-            # If we were given a total, that's
-            # overspecification.
-            if total is not None:
-                raise Exception("We shouldn't have defined a split-" +
-                        "vector and a total.")
+    def store_new_transaction(self, payers, split=None, invlvd=None,
+            total=None, comment="None"):
+        """
+        Stores a new transaction in which the payer(s) purchased
+        something for a group of people.
+        * payers -- either a name (string) or a dictionary of
+            names/amounts of people who paid.
+        * split -- optional dictionary -- list of people who owe
+            for the transaction and how much they owe.
+        * invlvd -- list,strings -- if split not defined, then
+            assume an even split between all these people
+            involved.
+        * total -- float -- if split not defined, the total for
+            the transaction to be split evenly.
+        """
+        # First deal with the payer and make it a dictionary of
+        # payers.
+        if type(payers) == str:
+            if split is not None:
+                total = sum(split.values())
+            payer = payers
+            payers = {payer : total}
+        # If payers was sent in as a dictionary, make sure its
+        # total agrees with that in the rest of the transaction.
+        elif type(payers) == dict:
+            if abs(sum(payers.values()) - total) > 1e-3:
+                raise Exception("The total amount paid should " +
+                    "be the total amount owed by all those involved")
         else:
-            # If it's an even split, but we don't have
-            # information about who's involved and the total
-            # amount, we can't use it.
-            if others is None or total is None or payer_incl is None:
-                raise Exception("For an even split, we " +
-                        "need the total, the others, " +
-                        "and whether or not the payer " +
-                        "was involved.")
-        new_transaction = {
-                "payer" : payer,
-                "split" : split,
-                "others" : others,
-                "total" : total,
-                "payer_incl" : payer_incl }
-        self.transactions.append(new_transaction)
+            raise Exception("Payer should be string or dictionary")
 
-    def get_persons_transactions(self, name):
-        person_debts = []
-        person_assets = []
-        for transaction_ind in xrange(len(self.transactions)):
-            transaction = self.transactions[transaction_ind]
-            # If the person payed, it's an asset; people owe
-            # him/her money.
-            if transaction["payer"] == name:
-                person_assets.append(transaction_ind)
-            # If the person was involved as an "other", they
-            # "owe" for the transaction.
-            elif name in transaction["others"]:
-                person_debts.append(transaction_ind)
-        return person_debts, person_assets
+        # Now if a full split was given, store it.
+        if split is not None:
+            # Run a check to make sure we're not overspecified.
+            if total is not None or invlvd is not None:
+                # If we're given a split-dictionary and either a
+                # total or a list of involved people (assumes an even
+                # split), that's overspecification.
+                raise Exception("We shouldn't have defined a split-" +
+                        "vector and a total or a list of involved " +
+                        "people.")
+                # Now, store the transaction and be done with it.
+                new_transaction = {
+                        "payers" : payers,
+                        "split" : split }
+                self.transactions.append(new_transaction)
+                return
+        # It's not a defined split. In that case we need both an
+        # involved list and a total.
+        if invlvd is None or total is None:
+            raise Exception("If we don't have a fully defined " +
+            "split, then we need a list of involved people and " +
+            " total to make an even split.")
+        # Convert a couple of accepted "involved" shorthand
+        # notations to lists of names.
+        if invlvd == "all":
+            invlvd = self.names
+        elif invlvd == "all_others":
+            invlvd = [name for name in self.names if name not in
+                    payers.keys()]
+        elif type(invlvd) is not list:
+            raise Exception("Needed a keyword or list for invlvd")
+        # We have all the information we need to make an even
+        # split, denoted by the fact that we were given a list
+        # of involved people and a transaction total.
+        # Note that if the payers were involved, they will simply
+        # end up owing themselves which works out fine.
+        debt_per_person = total/float(len(invlvd))
+        # Form the split -- that's how we'll store it.
+        split = {}
+        for person in invlvd:
+            split[person] = debt_per_person
+        new_transaction = {
+                "payers" : payers,
+                "split" : split,
+                "comment" : comment}
+        self.transactions.append(new_transaction)
+        return
+
+#    def get_persons_transactions(self, name):
+#        person_debts = []
+#        person_assets = []
+#        for transaction_ind in xrange(len(self.transactions)):
+#            transaction = self.transactions[transaction_ind]
+#            # If the person payed, it's an asset; people owe
+#            # him/her money.
+#            if name in transaction["payers"].keys():
+#                person_assets.append(transaction_ind)
+#            # If the person was involved, they
+#            # "owe" for the transaction.
+#            if name in transaction["split"].keys():
+#                person_debts.append(transaction_ind)
+#        return person_debts, person_assets
 
     def get_persons_total_debt(self, name):
         """
@@ -77,59 +131,40 @@ class Group:
         a positive value if the person net owes money and a
         negative value if they're net owed money.
         """
-        
-        person_debts, person_assets = \
-                self.get_persons_transactions(name)
+#        person_debts, person_assets = \
+#                self.get_persons_transactions(name)
         total_debt = 0
-        # First loop through all the transactions in which
-        # they were they payer.
-        for asset_ind in person_assets:
-            transaction = self.transactions[asset_ind]
-            # If it was an even split, we have the total.
-            if split == "even":
-                # If the payer was involved, they're not owed
-                # the total.
-                if transaction["payer_incl"]:
-                    num_others = len(transaction["others"])
-                    total_debt -= transaction["total"] * \
-                            (num_others/(num_others + 1))
-                # Otherwise, they're owed the whole amount.
-                else:
-                    total_debt -= transaction["total"]
-            # It wasn't an even split. They're just owed the
-            # sum of the split.
-            else:
-                total_debt -= sum(split)
-        # Now all the ones in which they were involved but not
-        # the payer.
-        for debt_ind in person_debts:
-            transaction = self.transactions[debt_ind]
-            # If it's an even split and they were involved
-            if split == "even":
-                # Again, need to figure out if payer was
-                # involved.
-                num_others = len(transaction["others"])
-                if transaction["payer_incl"]:
-                    total_debt += transaction["total"] / \
-                            (num_others + 1)
-                # Otherwise, just the others were involved.
-                else:
-                    total_debt += transaction["total"] / \
-                            num_others
-            # It wasn't an even split. They just owe exactly
-            # what split says they owe.
-            else:
-                name_ind = self.indices[name]
-                total_debt += split[name_ind]
+        # Loop through all the transactions. Add debt where the
+        # person is in the split, remove it where the person made
+        # a payment.
+        for transaction in self.transactions:
+            if name in transaction["payers"].keys():
+                total_debt -= transaction["payers"][name]
+            if name in transaction["split"].keys():
+                total_debt += transaction["split"][name]
         return total_debt
+#        # First loop through all the transactions in which
+#        # they were they payer. Figure out the total for the
+#        # transaction, then increase that person's "assets" by
+#        # that much. If s/he was involved in the transaction as
+#        # well, that will come out later in the debts section.
+#        for asset_ind in person_assets:
+#            transaction = self.transactions[asset_ind]
+#            total_debt -= sum(split.values())
+#        # Now all the ones in which they were involved (whether
+#        # or not they were also the payer).
+#        for debt_ind in person_debts:
+#            transaction = self.transactions[debt_ind]
+#            total_debt += transaction["split"][name]
+#        return total_debt
 
     def add_person(self, new_name, old_debt=None):
         """
         Adds someone to the payment array. 
+        * new_name -- str -- the name of the person to add.
         * old_debt -- dict,str:float -- the names of people this
-        * person owes and the amounts this person owes them.
+            person owes and the amounts this person owes them.
         """
-
         # Extra person -- add to the total.
         self.N += 1
         # Add this person to the list of people-indices
@@ -142,19 +177,22 @@ class Group:
         # "inverse" transaction in that if it were a typical
         # transaction, they would have paid and "others" would
         # owe them, but here, they need to pay, so we'll just
-        # have a negative total or split vector.
+        # have a negatives in our split vector.
         if old_debt is not None:
-            # The vector of how much the person owes people
-            debts_vec = np.zeros((self.N))
-            for (other, amount) in old_debt.items():
-                # The index of the person the new person owes.
-                other_ind = self.indices[other]
-                # Setting the debt vector by index.
-                split[other_ind] = old_debt[other]
+            split = {}
+            for (name, amount) in old_debt.iteritems():
+                split[name] = -amount
+#            # The vector of how much the person owes people
+#            debts_vec = np.zeros((self.N))
+#            for (other, amount) in old_debt.items():
+#                # The index of the person the new person owes.
+#                other_ind = self.indices[other]
+#                # Setting the debt vector by index.
+#                split[other_ind] = old_debt[other]
             # Now that it's set up, store this as a transaction.
             self.store_new_transaction(
-                    payer = new_name,
-                    split = -debts_vec)
+                    payers = new_name,
+                    split = split)
 
     def remove_person(self, leaving, debt_forgiven,
             debt_settled=None, debt_absorber=None):
@@ -173,6 +211,8 @@ class Group:
         * debt_absorber -- string -- name of the person to absorb
             the debt of the person leaving.
         """
+        # XXX -- Fix with new payer/split transaction storage
+        # method.
         # Make sure we have something to do.
         if not debt_forgiven and not debt_settled \
                 and not debt_absorber:
@@ -185,9 +225,9 @@ class Group:
         # Remove that person from the indices
         del self.indices[name]
 #        leaving = leavingnum
-        # Get all the transactions involving the person.
-        person_debts, person_assets = \
-                self.get_persons_transactions(name)
+#        # Get all the transactions involving the person.
+#        person_debts, person_assets = \
+#                self.get_persons_transactions(name)
         # We have one fewer person.
         self.N -= 1
         # If the debt from this person is simply being forgiven.
@@ -245,71 +285,60 @@ class Group:
         np.delete(self.paymat, name, axis=0)
         np.delete(self.paymat, name, axis=1)
 
-    def add_transaction(self, payer, split, others=None,
-            total=None, payer_incl=None):
+    def add_transaction(self, payers, split):
         """
         Add a transaction to the current paymat -- note that the
-        payer is owed by the others in the group.
-        * Payee -- string -- name of person that payed for this
-            transaction
-        * split -- string/array, floats -- if "even", split costs
-            evenly, if an array of floats, then the array should
-            sum to the total and be an array of how much each
-            person owes (zeros for people ).
-        * others -- string/array, strings -- if "ALL", then everyone is
-            involved, otherwise, names of people involved
-        * total -- float -- total amount
-        * payer_incl -- bool -- whether or not the payer was
-            involved in this evenly divided transaction.
+        payers are owed by the split members (which may include
+        the payers).
+        * payers -- dict {str:float} -- dictionary of payers,
+            amounts.
+        * split -- dict {str:float} -- the people involved in the
+            transaction, names, amounts.
         """
-        # Numerical index of the payer
-        payer_ind = self.indices[payer_ind]
-        # If we have a fully defined split, that's all we need.
-        if split != "even":
-            # We were simply given what people owe the payer. How
-            # nice and easy.
-            self.paymat[:, payer] += split
-        # Otherwise, it's an even split among "others".
-        else:
-            # Numerical indices for the others
-            if others == "ALL":
-                # Everyone's involved in this transaction
-                others_ind = self.indices.values()
-            else:
-                # Divide only among the people involved
-                others_ind = [self.indices[other] for other in others]
-            # Split the bill is split evenly among those involved
-            # If the payer participated, they owe a smaller
-            # amount.
-            if payer_incl:
-                per_person = float(total)/(len(others_ind) + 1)
-            # Otherwise, they owe just among the others.
-            else:
-                per_person = float(total)/len(others_ind)
-            for person_ind in others_ind:
-                # Adjust the payment array so that each person in
-                # the group now owes the payer the per_person
-                # amount more.
-                self.paymat[person_ind, payer] += per_person
-
-    def generate_paymat(self):
-        """
-        Generate a paymatrix with the current transaction
-        list.
-        """
-        # First, make the matrix to be filled in.
-        self.paymat = np.array( np.zeros((self.N,self.N)) )
-        # Populate it with the saved transactions.
-        for transaction in self.transactions:
-            self.add_transaction(
-                    transaction["payer"],
-                    transaction["others"],
-                    transaction["total"],
-                    transaction["split"])
+        # Figure out how much every person in the party owes/is
+        # owed for this transaction.
+        ind_contrs = np.zeros(self.N)
+        for name in self.names:
+            name_ind = self.indices[name]
+            if name in payers.keys():
+                ind_contrs[name_ind] += payers[name]
+            if name in split.keys():
+                ind_contrs[name_ind] -= split[name]
+        # Indices of those owed and those owing.
+        owed_inds = np.nonzero(ind_contrs > 0)
+        owing_inds = np.nonzero(ind_contrs < 0)
+        # Sanity check. Total owed should be neg of total owing:
+        total_owed = sum(ind_contrs[owed_inds])
+        total_owing = sum(ind_contrs[owing_inds])
+        if abs(total_owed + total_owing) > 1e-3:
+            print "Payers:"
+            print payers
+            print "Split:"
+            print split
+            raise Exception("Something wrong with transaction.")
+        # Figure out the ratios in which the people who are owed
+        # should be paid.
+        owed_ratios = np.zeros(self.N)
+        for owed in owed_inds:
+            owed_ratios[owed] = ind_contrs[owed]/float(total_owed)
+        # Sanity check. Total owed ratios should sum to one.
+        if abs(sum(owed_ratios) - 1) > 1e-3:
+            print "Payers:"
+            print payers
+            print "Split:"
+            print split
+            raise Exception("Error in transaction assignment.")
+        # Now, assign transactions to a payment matrix such that
+        # everyone will be square from this transaction.
+        for owing in owing_inds:
+            debt = -ind_contrs[owing]
+            for owed in owed_inds:
+                self.paymat[owing, owed] += debt*owed_ratios[owed]
+        return
 
     def simplify(self):
         """
-        This function takes paymat and reduces it such that there
+        This function makes a paymat and reduces it such that there
         are no 'double-owes' -- people owing each other and no
         'chain owes' -- people owing someone who owes someone
         else.
@@ -318,15 +347,17 @@ class Group:
         George -- this can be reduced to three payments rather
         than four).
         """
-
         # First, generate an unsimplified payment matrix from the
         # list of transactions.
+        # First, make the matrix to be filled in.
+        self.paymat = np.array( np.zeros((self.N,self.N)) )
+        # Populate it with the saved transactions.
         for transaction in self.transactions:
             self.add_transaction(
-                    transaction["payer"],
-                    transaction["others"],
-                    transaction["total"],
+                    transaction["payers"],
                     transaction["split"])
+        print "Unsimplified:"
+        print self.paymat
 
         # Make a list of total payments debts and credits per
         # person initially. This will verify the simplification
@@ -502,4 +533,6 @@ class Group:
                 raise Exception("Simplify() script changed the " +
                     "individual balances. There's a problem " +
                     "with the algorithm.")
+        print "Simplified:"
+        print self.paymat
 

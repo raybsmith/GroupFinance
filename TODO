@@ -12,7 +12,12 @@
 * Fix add_person after adding way to add transactions.
 
 [TODO-Engine]
+* Fix the remove_person function to work with new payers/split
+  transaction storage method. Also, just generally fix
+  remove_person; it's a mess.
+* Add comments to transactions.
 * Test function to print a person's total debt/assets right now.
+  -> Fix to look at split-involved people.
 * Test remove_person functionality.
 
 [Optional]
@@ -38,3 +43,9 @@
   should absorb debts and assets.
 * Fix remove_person to work with stored transactions rather than
   a stored payment matrix
+* With simplified transactions (split dict or invlvd list), make
+  a split dictionary either way all in store_new_transaction.
+* Instead of an "others" and "payer_incl", just to an
+  "all-involved" flag if the payer is included, is included.
+* Allow for multiple payers
+* Make split a dictionary of name : amount owed in  transaction.
