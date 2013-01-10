@@ -12,6 +12,9 @@
 * Fix add_person after adding way to add transactions.
 
 [TODO-Engine]
+* Possibly eliminate chain-elimination except for special, equal
+  case
+* Fix simplify to work with negatives
 * Fix the remove_person function to work with new payers/split
   transaction storage method. Also, just generally fix
   remove_person; it's a mess.

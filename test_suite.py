@@ -1,21 +1,41 @@
 import group_obj
 
-test_num = 2
+test_num = 1
 
 if test_num == 1:
-    newgroup = group_obj.Group(names=["r", "m", "c", "g", "p"])
-    # m loaned $40 to r.
-    newgroup.store_new_transaction("m", "even", others="r", total=40,
-            payer_incl=False)
-    # c bought a group dinner for all for $70.
-    newgroup.store_new_transaction("c", "even", others="ALL", total=70,
-            payer_incl=True)
-    # g loaned the group $15 cash to xxx.
-    newgroup.store_new_transaction("g", "even", others="ALL", total=15,
-            payer_incl=False)
-    # r paid for $20 lunch for g, r, and p.
-    newgroup.store_new_transaction("r", "even", others=["g", "p"],
-            total=20, payer_incl=True)
+    PSgroup = group_obj.Group(names=["r", "yu", "d", "j",
+        "yo", "lu", "li", "z"])
+    # R's total group expenses.
+    PSgroup.store_new_transaction("r",
+            invlvd="all", total=198.13,
+            comment="Ray's total group expenses")
+    # Zach's total group expenses.
+    PSgroup.store_new_transaction("z",
+            invlvd="all", total=153.25,
+            comment="Zach's total group expenses")
+    # Yuqing's total group expenses.
+    PSgroup.store_new_transaction("yu",
+            invlvd="all", total=16,
+            comment="Yuqing's total group expenses")
+    # David's total group expenses.
+    PSgroup.store_new_transaction("d",
+            invlvd="all", total=220.43,
+            comment="David's total group expenses")
+    # Joel's total group expenses.
+    PSgroup.store_new_transaction("j",
+            invlvd="all", total=324.90,
+            comment="Joel's total group expenses")
+    # Lucas owe's Ray from cash loaned during Hull.
+    PSgroup.store_new_transaction("r",
+            invlvd=["lu"], total=32,
+            comment="Lucas borrowed cash from Ray during Hull.")
+    # Ray owes Zach from uhaul.
+    PSgroup.store_new_transaction("z",
+            invlvd=["r"], total=18,
+            comment="Zach paid for Ray+Zach shared Uhaul.")
+#    for transaction in PSgroup.transactions:
+#        print transaction
+    PSgroup.simplify()
 
 elif test_num == 2:
     skigroup = group_obj.Group(names=["b", "a", "r", "k", "s"])
