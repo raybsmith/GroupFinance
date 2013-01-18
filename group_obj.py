@@ -572,4 +572,18 @@ class Group:
                     "with the algorithm.")
         print "Simplified:"
         print self.paymat
+        for debtor in xrange(self.N):
+            for creditor in xrange(self.N):
+                debt = self.paymat[debtor, creditor]
+                if debt:
+                    # Find names corresponding to debtor,
+                    # creditor indices.
+                    for (name, indx) in self.indices.iteritems():
+                        if indx == debtor:
+                            dname = name
+                        elif indx == creditor:
+                            cname = name
+                    print ("{debtor_name} owes {creditor_name} "
+                            "${debtval}").format(debtor_name=dname,
+                            creditor_name=cname, debtval=debt)
 
