@@ -14,11 +14,9 @@
 [TODO-Engine]
 * Possibly eliminate chain-elimination except for special, equal
   case
-* Fix simplify to work with negatives
 * Fix the remove_person function to work with new payers/split
   transaction storage method. Also, just generally fix
   remove_person; it's a mess.
-* Add comments to transactions.
 * Test function to print a person's total debt/assets right now.
   -> Fix to look at split-involved people.
 * Test remove_person functionality.
@@ -52,3 +50,6 @@
   "all-involved" flag if the payer is included, is included.
 * Allow for multiple payers
 * Make split a dictionary of name : amount owed in  transaction.
+* Add comments to transactions.
+* Fix simplify to work with negatives [fixed add_transaction to
+  work with negatives and always set it up right]

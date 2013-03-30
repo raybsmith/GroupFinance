@@ -61,6 +61,15 @@ class Group:
                     "be the total amount owed by all those involved")
         else:
             raise Exception("Payer should be string or dictionary")
+        # Check payers to make sure they're actually people in
+        # the group
+        for payer in payers.iterkeys():
+            if payer not in self.names:
+                print "group names:", self.names
+                print "payer:", payer
+                print "comment:", comment
+                raise Exception("The above transaction involves"+
+                        " payer(s) who aren't in the group")
 
         # Now if a full split was given, store it.
         if split is not None:
@@ -72,12 +81,23 @@ class Group:
                 raise Exception("We shouldn't have defined a split-" +
                         "vector and a total or a list of involved " +
                         "people.")
-                # Now, store the transaction and be done with it.
-                new_transaction = {
-                        "payers" : payers,
-                        "split" : split }
-                self.transactions.append(new_transaction)
-                return
+            # Run a check to make sure they're all actually
+            # people in the group
+            for person in split.iterkeys():
+                if person not in self.names:
+                    print "group names:", self.names
+                    print "split:", split
+                    print "comment:", comment
+                    raise Exception("The above transaction involves"
+                            +" people in the split who aren't in"
+                            +" the group")
+            # Now, store the transaction and be done with it.
+            new_transaction = {
+                    "payers" : payers,
+                    "split" : split,
+                    "comment" : comment}
+            self.transactions.append(new_transaction)
+            return
         # It's not a defined split. In that case we need both an
         # involved list and a total.
         if invlvd is None or total is None:
@@ -103,6 +123,16 @@ class Group:
         split = {}
         for person in invlvd:
             split[person] = debt_per_person
+        # Run a check to make sure they're all actually
+        # people in the group
+        for person in split.iterkeys():
+            if person not in self.names:
+                print "group names:", self.names
+                print "split:", split
+                print "comment:", comment
+                raise Exception("The above transaction involves"
+                        +" people in the split who aren't in"
+                        +" the group")
         new_transaction = {
                 "payers" : payers,
                 "split" : split,
@@ -511,10 +541,10 @@ class Group:
                                 self.paymat[debtor1, shared2],
                                 self.paymat[debtor2, shared1],
                                 self.paymat[debtor2, shared2]]) )
-                        print "PRE-paymat:"
-                        print self.paymat
-                        print "[d1, d2, s1, s2]: ",\
-                            debtor1, debtor2, shared1, shared2
+#                        print "PRE-paymat:"
+#                        print self.paymat
+#                        print "[d1, d2, s1, s2]: ",\
+#                            debtor1, debtor2, shared1, shared2
                         # Get rid of one of them
                         if min_flag == 0:
                             adj = self.paymat[debtor1, shared1]
@@ -540,8 +570,8 @@ class Group:
                             self.paymat[debtor1, shared2] += adj
                             self.paymat[debtor2, shared1] += adj
                             self.paymat[debtor2, shared2] = 0
-                        print "POST-paymat:"
-                        print self.paymat
+#                        print "POST-paymat:"
+#                        print self.paymat
             count += 1
         if count == max_count:
             print "Ahh, iteration-max!"

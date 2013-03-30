@@ -1,6 +1,6 @@
 import group_obj
 
-test_num = 1
+test_num = 4
 
 if test_num == 1:
     PSgroup = group_obj.Group(names=["r", "yu", "d", "j",
@@ -70,3 +70,31 @@ elif test_num == 2:
     for transaction in skigroup.transactions:
         print transaction
     skigroup.simplify()
+
+elif test_num == 3:
+    aptgroup = group_obj.Group(names=["b", "a", "r", "k"])
+    # Ray got paid back for Lea's furniture -- owes back to rest
+    aptgroup.store_new_transaction("r", \
+            invlvd=["b", "a", "r"], total=-48.39, \
+            comment="R paid back for Lea's bed")
+    aptgroup.simplify()
+
+elif test_num == 4:
+    roomies = group_obj.Group(names=["ra", "b", "re", "m", "j"])
+    # Michael owes Ray $56
+    roomies.store_new_transaction("ra", invlvd=["m"], total=56,
+            comment="Michael still owes Ray $56 from other")
+    # Ray spent $115.63 on groceries and a group dinner
+    roomies.store_new_transaction("ra", invlvd="all",
+            total=115.63, comment="Ray paid $12.82 for groceries"
+            + " and $102.81 for Mellow Mushroom")
+    # Jack spent $77 on groceries
+    roomies.store_new_transaction("j", invlvd="all", total=77,
+            comment="Jack paid $77 on groceries")
+    # Jack bought dinner for Ray, Reid, Michael, ~$15 each
+    roomies.store_new_transaction("j", invlvd=["ra", "m", "re", "j"],
+            total=15*4, comment="Approximate transaction: "+
+            "Jack bought dinner for us at Vintner")
+    for transaction in roomies.transactions:
+        print transaction
+    roomies.simplify()
