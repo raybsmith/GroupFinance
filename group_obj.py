@@ -371,6 +371,73 @@ class Group:
             balances_init[creditor] += \
                     np.sum(self.paymat[:, creditor])
 
+        # Get rid of multi-multi-payments (A and B both pay C
+        # and D).
+        multis_present = 1
+        count = 1
+        max_count = 100
+        while multis_present and count < max_count:
+            # Assume the previous loop took care of the last one.
+            multis_present = 0
+            for debtor1 in xrange(self.N):
+                # This debtor's creditors.
+                creditors1 = np.nonzero(self.paymat[debtor1, :])[0]
+                # Check to see if this debtor shares 2 creditors with
+                # any subsequent debtor. If so, then it can be
+                # simplified.
+                for debtor2 in xrange(self.N):
+                    # Not concerned if debtor shares creditors
+                    # with self.
+                    if debtor2 == debtor1:
+                        continue # with the next debtor
+                    # This debtor's creditors.
+                    creditors2 = np.nonzero(self.paymat[debtor2, :])[0]
+                    # Generate a list of shared creditors?
+                    shared = np.intersect1d(creditors1,
+                            creditors2)
+                    # If there are at least 2 shared.
+                    if len(shared) >= 2:
+                        # There are still multi's around.
+                        multis_present = 1
+                        # Deal with the first 2 shared creditors.
+                        shared1 = shared[0]
+                        shared2 = shared[1]
+                        # Find the lowest debt in the 'rectangle'.
+                        min_flag = np.argmin( np.array([
+                                self.paymat[debtor1, shared1],
+                                self.paymat[debtor1, shared2],
+                                self.paymat[debtor2, shared1],
+                                self.paymat[debtor2, shared2]]) )
+                        # Get rid of one of them
+                        if min_flag == 0:
+                            adj = self.paymat[debtor1, shared1]
+                            self.paymat[debtor1, shared1] = 0
+                            self.paymat[debtor1, shared2] += adj
+                            self.paymat[debtor2, shared1] += adj
+                            self.paymat[debtor2, shared2] -= adj
+                        elif min_flag == 1:
+                            adj = self.paymat[debtor1, shared2]
+                            self.paymat[debtor1, shared1] += adj
+                            self.paymat[debtor1, shared2] = 0
+                            self.paymat[debtor2, shared1] -= adj
+                            self.paymat[debtor2, shared2] += adj
+                        elif min_flag == 2:
+                            adj = self.paymat[debtor2, shared1]
+                            self.paymat[debtor1, shared1] += adj
+                            self.paymat[debtor1, shared2] -= adj
+                            self.paymat[debtor2, shared1] = 0
+                            self.paymat[debtor2, shared2] += adj
+                        elif min_flag == 3:
+                            adj = self.paymat[debtor2, shared2]
+                            self.paymat[debtor1, shared1] -= adj
+                            self.paymat[debtor1, shared2] += adj
+                            self.paymat[debtor2, shared1] += adj
+                            self.paymat[debtor2, shared2] = 0
+            count += 1
+        if count == max_count:
+            # Do we want to do anything here?
+            pass
+
         # Systematically go through and eliminate all chains.
         # Consider each debtor.
         for debtor in xrange(self.N):
@@ -453,78 +520,6 @@ class Group:
         # Eliminate self-pays
         for person in xrange(self.N):
             self.paymat[person, person] = 0
-
-        # Now get rid of multi-multi-payments (A and B both pay C
-        # and D).
-        multis_present = 1
-        count = 1
-        max_count = 100
-        while multis_present and count < max_count:
-            # Assume the previous loop took care of the last one.
-            multis_present = 0
-            for debtor1 in xrange(self.N):
-                # This debtor's creditors.
-                creditors1 = np.nonzero(self.paymat[debtor1, :])[0]
-                # Check to see if this debtor shares 2 creditors with
-                # any subsequent debtor. If so, then it can be
-                # simplified.
-                for debtor2 in xrange(self.N):
-                    # Not concerned if debtor shares creditors
-                    # with self.
-                    if debtor2 == debtor1:
-                        continue # with the next debtor
-                    # This debtor's creditors.
-                    creditors2 = np.nonzero(self.paymat[debtor2, :])[0]
-                    # Generate a list of shared creditors?
-                    shared = np.intersect1d(creditors1,
-                            creditors2)
-                    # If there are at least 2 shared.
-                    if len(shared) >= 2:
-                        # There are still multi's around.
-                        multis_present = 1
-                        # Deal with the first 2 shared creditors.
-                        shared1 = shared[0]
-                        shared2 = shared[1]
-                        # Find the lowest debt in the 'rectangle'.
-                        min_flag = np.argmin( np.array([
-                                self.paymat[debtor1, shared1],
-                                self.paymat[debtor1, shared2],
-                                self.paymat[debtor2, shared1],
-                                self.paymat[debtor2, shared2]]) )
-#                        print "PRE-paymat:"
-#                        print self.paymat
-#                        print "[d1, d2, s1, s2]: ",\
-#                            debtor1, debtor2, shared1, shared2
-                        # Get rid of one of them
-                        if min_flag == 0:
-                            adj = self.paymat[debtor1, shared1]
-                            self.paymat[debtor1, shared1] = 0
-                            self.paymat[debtor1, shared2] += adj
-                            self.paymat[debtor2, shared1] += adj
-                            self.paymat[debtor2, shared2] -= adj
-                        elif min_flag == 1:
-                            adj = self.paymat[debtor1, shared2]
-                            self.paymat[debtor1, shared1] += adj
-                            self.paymat[debtor1, shared2] = 0
-                            self.paymat[debtor2, shared1] -= adj
-                            self.paymat[debtor2, shared2] += adj
-                        elif min_flag == 2:
-                            adj = self.paymat[debtor2, shared1]
-                            self.paymat[debtor1, shared1] += adj
-                            self.paymat[debtor1, shared2] -= adj
-                            self.paymat[debtor2, shared1] = 0
-                            self.paymat[debtor2, shared2] += adj
-                        elif min_flag == 3:
-                            adj = self.paymat[debtor2, shared2]
-                            self.paymat[debtor1, shared1] -= adj
-                            self.paymat[debtor1, shared2] += adj
-                            self.paymat[debtor2, shared1] += adj
-                            self.paymat[debtor2, shared2] = 0
-#                        print "POST-paymat:"
-#                        print self.paymat
-            count += 1
-        if count == max_count:
-            print "Ahh, iteration-max!"
 
         # The final list of balances. A person's total received
         # payments - debts should be the same before and after
