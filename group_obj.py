@@ -353,6 +353,8 @@ class Group:
             owed_ratios[owed] = ind_contrs[owed]/float(total_owed)
         # Sanity check. Total owed ratios should sum to one.
         if abs(sum(owed_ratios) - 1) > 1e-3:
+            print "Error info:"
+            print sum(owed_ratios)
             print "Payers:"
             print payers
             print "Split:"
@@ -377,6 +379,8 @@ class Group:
         George -- this can be reduced to three payments rather
         than four).
         """
+        # Set up numpy printing options
+        np.set_printoptions(precision=3, suppress=True)
         # First, generate an unsimplified payment matrix from the
         # list of transactions.
         # First, make the matrix to be filled in.
