@@ -150,29 +150,12 @@ class Group:
         self.transactions.append(new_transaction)
         return
 
-#    def get_persons_transactions(self, name):
-#        person_debts = []
-#        person_assets = []
-#        for transaction_ind in xrange(len(self.transactions)):
-#            transaction = self.transactions[transaction_ind]
-#            # If the person payed, it's an asset; people owe
-#            # him/her money.
-#            if name in transaction["payers"].keys():
-#                person_assets.append(transaction_ind)
-#            # If the person was involved, they
-#            # "owe" for the transaction.
-#            if name in transaction["split"].keys():
-#                person_debts.append(transaction_ind)
-#        return person_debts, person_assets
-
     def get_persons_total_debt(self, name):
         """
         Returns the total debt a person has in the group. Returns
         a positive value if the person net owes money and a
         negative value if they're net owed money.
         """
-#        person_debts, person_assets = \
-#                self.get_persons_transactions(name)
         total_debt = 0
         # Loop through all the transactions. Add debt where the
         # person is in the split, remove it where the person made
@@ -183,20 +166,6 @@ class Group:
             if name in transaction["split"].keys():
                 total_debt += transaction["split"][name]
         return total_debt
-#        # First loop through all the transactions in which
-#        # they were they payer. Figure out the total for the
-#        # transaction, then increase that person's "assets" by
-#        # that much. If s/he was involved in the transaction as
-#        # well, that will come out later in the debts section.
-#        for asset_ind in person_assets:
-#            transaction = self.transactions[asset_ind]
-#            total_debt -= sum(split.values())
-#        # Now all the ones in which they were involved (whether
-#        # or not they were also the payer).
-#        for debt_ind in person_debts:
-#            transaction = self.transactions[debt_ind]
-#            total_debt += transaction["split"][name]
-#        return total_debt
 
     def add_person(self, new_name, old_debt=None):
         """
@@ -222,13 +191,6 @@ class Group:
             split = {}
             for (name, amount) in old_debt.iteritems():
                 split[name] = -amount
-#            # The vector of how much the person owes people
-#            debts_vec = np.zeros((self.N))
-#            for (other, amount) in old_debt.items():
-#                # The index of the person the new person owes.
-#                other_ind = self.indices[other]
-#                # Setting the debt vector by index.
-#                split[other_ind] = old_debt[other]
             # Now that it's set up, store this as a transaction.
             self.store_new_transaction(
                     payers = new_name,
@@ -351,10 +313,8 @@ class Group:
         total_owed = sum(ind_contrs[owed_inds])
         total_owing = sum(ind_contrs[owing_inds])
         if abs(total_owed + total_owing) > 1e-3:
-            print "Payers:"
-            print payers
-            print "Split:"
-            print split
+            print "Payers:", payers
+            print "Split:", split
             raise Exception("Something wrong with transaction.")
         # Figure out the ratios in which the people who are owed
         # should be paid.
@@ -363,12 +323,9 @@ class Group:
             owed_ratios[owed] = ind_contrs[owed]/float(total_owed)
         # Sanity check. Total owed ratios should sum to one.
         if abs(sum(owed_ratios) - 1) > 1e-3:
-            print "Error info:"
-            print sum(owed_ratios)
-            print "Payers:"
-            print payers
-            print "Split:"
-            print split
+            print "Error info:", sum(owed_ratios)
+            print "Payers:", payers
+            print "Split:", split
             raise Exception("Error in transaction assignment.")
         # Now, assign transactions to a payment matrix such that
         # everyone will be square from this transaction.
@@ -414,28 +371,17 @@ class Group:
             balances_init[creditor] += \
                     np.sum(self.paymat[:, creditor])
 
-        # First, eliminate all self-payments.
-#        print "with self-pay:"
-#        print self.paymat
-        for person in xrange(self.N):
-            self.paymat[person, person] = 0
-#        print "sans self-pay:"
-#        print self.paymat
         # Systematically go through and eliminate all chains.
         # Consider each debtor.
         for debtor in xrange(self.N):
             # Look at the people they may owe money to -- their
             # creditors.
             for creditor in xrange(self.N):
-#                print "debtor: ", debtor
-#                print "creditor: ", creditor
                 # If debtor owes creditor and creditor owes other
                 # people money.
                 # List of people creditor could owe to.
                 creditors_creditors = [i for i in xrange(self.N)
                         if i != creditor]
-#                print "consider creditor's creditors: ", \
-#                        creditors_creditors
                 creditors_total_debt = np.sum(self.paymat[creditor,
                     creditors_creditors])
                 if (self.paymat[debtor, creditor]
@@ -454,8 +400,6 @@ class Group:
                         # debts.
                         for creditors_creditor in \
                                 creditors_creditors:
-#                            debt2 = self.paymat[creditor,
-#                                    creditors_creditor]
                             # Debter picks up creditor's debt.
                             self.paymat[debtor, creditors_creditor] += \
                                     self.paymat[creditor, creditors_creditor]
@@ -470,11 +414,7 @@ class Group:
                         # self-payments.
                         if creditors_creditor == creditor:
                             creditors_creditor += 1
-#                        print "debtor: ", debtor
-#                        print "creditor: ", creditor
                         while self.paymat[debtor, creditor] > 0:
-#                            print "creditors creditor: ", creditors_creditor
-#                            print self.paymat
                             # Useful to have these abbreviated:
                             debt1 = self.paymat[debtor, creditor]
                             debt2 = self.paymat[creditor,
@@ -485,12 +425,7 @@ class Group:
                             # the whole thing.
                             if debt1 > debt2:
                                 # Debter owes creditor less.
-#                                print "subtract ", debt2, \
-#                                " from index ", debtor, creditor
                                 self.paymat[debtor, creditor] -= debt2
-#                                print self.paymat[debtor,
-#                                        creditor]
-#                                print self.paymat
                                 # Debter picks up creditor's debt.
                                 self.paymat[debtor,
                                         creditors_creditor] += debt2
@@ -514,7 +449,8 @@ class Group:
                             # Increment the person we're looking at
                             # creditor owing.
                             creditors_creditor += 1
-        # Re-eliminate self-pays
+
+        # Eliminate self-pays
         for person in xrange(self.N):
             self.paymat[person, person] = 0
 
@@ -604,7 +540,7 @@ class Group:
         for person in self.names:
             balance_i = balances_init[self.indices[person]]
             balance_f = balances_final[self.indices[person]]
-            print "%s:  %5.2f / %5.2f" %(person, balance_i, balance_f)
+            print "%s:  %.2f / %.2f" %(person, balance_i, balance_f)
         # We'll accept a change of less than a penny or so in
         # total balance for an individual.
         tol = 1e-3
@@ -628,6 +564,6 @@ class Group:
                         elif indx == creditor:
                             cname = name
                     print ("{debtor_name} owes {creditor_name} "
-                            "${debtval}").format(debtor_name=dname,
+                            "${debtval:.2f}").format(debtor_name=dname,
                             creditor_name=cname, debtval=debt)
 
