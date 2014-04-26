@@ -46,21 +46,44 @@ class Group:
         * total -- float -- if split not defined, the total for
             the transaction to be split evenly.
         """
+
+        # Basic input checks for types, sufficiency
+        if type(payers) not in [dict, str]:
+            print "\n\ncomment:", comment, "\n\n"
+            raise Exception("payer(s) must be a string or dictionary")
+        if split and type(split) != dict:
+            print "\n\ncomment:", comment, "\n\n"
+            raise Exception("split must be a dictionary")
+        if (split and invlvd) or (not split and not invlvd):
+            print "\n\ncomment:", comment, "\n\n"
+            raise Exception("must specify EITHER split or list of involved")
+        if invlvd and type(invlvd) not in [str, list]:
+            print "\n\ncomment:", comment, "\n\n"
+            raise Exception("invlvd must either  be 'all' or list of names")
+        # Basic input checks for total transaction amount
+        if type(payers) == dict:
+            payed_total = sum(payers.values())
+            if total and abs(payed_total - total) > 1e-3:
+                print "\n\ncomment:", comment, "\n\n"
+                raise Exception("Payed total doesn't match transaction total")
+            total = payed_total
+            if split and abs(payed_total - sum(split.values())) > 1e-3:
+                print "\n\ncomment:", comment, "\n\n"
+                raise Exception("Payed total doesn't match split total")
+        if split:
+            split_total = sum(split.values())
+            if total and abs(split_total - total) > 1e-3:
+                print "\n\ncomment:", comment, "\n\n"
+                raise Exception("Split total doesn't match transaction total")
+            total = split_total
+        if not total:
+            print "\n\ncomment:", comment, "\n\n"
+            raise Exception("Total amount must be specified somehow!")
+
         # First deal with the payer and make it a dictionary of
         # payers.
         if type(payers) == str:
-            if split is not None:
-                total = sum(split.values())
-            payer = payers
-            payers = {payer : total}
-        # If payers was sent in as a dictionary, make sure its
-        # total agrees with that in the rest of the transaction.
-        elif type(payers) == dict:
-            if abs(sum(payers.values()) - total) > 1e-3:
-                raise Exception("The total amount paid should " +
-                    "be the total amount owed by all those involved")
-        else:
-            raise Exception("Payer should be string or dictionary")
+            payers = {payers : total}
         # Check payers to make sure they're actually people in
         # the group
         for payer in payers.iterkeys():
@@ -68,19 +91,11 @@ class Group:
                 print "group names:", self.names
                 print "payer:", payer
                 print "comment:", comment
-                raise Exception("The above transaction involves"+
+                raise Exception("The above transaction involves" +
                         " payer(s) who aren't in the group")
 
         # Now if a full split was given, store it.
-        if split is not None:
-            # Run a check to make sure we're not overspecified.
-            if total is not None or invlvd is not None:
-                # If we're given a split-dictionary and either a
-                # total or a list of involved people (assumes an even
-                # split), that's overspecification.
-                raise Exception("We shouldn't have defined a split-" +
-                        "vector and a total or a list of involved " +
-                        "people.")
+        if split:
             # Run a check to make sure they're all actually
             # people in the group
             for person in split.iterkeys():
@@ -98,21 +113,16 @@ class Group:
                     "comment" : comment}
             self.transactions.append(new_transaction)
             return
+
         # It's not a defined split. In that case we need both an
         # involved list and a total.
-        if invlvd is None or total is None:
-            raise Exception("If we don't have a fully defined " +
-            "split, then we need a list of involved people and " +
-            " total to make an even split.")
         # Convert a couple of accepted "involved" shorthand
         # notations to lists of names.
         if invlvd == "all":
             invlvd = self.names
-        elif invlvd == "all_others":
+        elif invlvd == "all others":
             invlvd = [name for name in self.names if name not in
                     payers.keys()]
-        elif type(invlvd) is not list:
-            raise Exception("Needed a keyword or list for invlvd")
         # We have all the information we need to make an even
         # split, denoted by the fact that we were given a list
         # of involved people and a transaction total.
