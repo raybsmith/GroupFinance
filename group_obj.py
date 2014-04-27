@@ -357,8 +357,6 @@ class Group:
             self.add_transaction(
                     transaction["payers"],
                     transaction["split"])
-        print "Unsimplified:"
-        print self.paymat
 
         # Make a list of total payments debts and credits per
         # person initially. This will verify the simplification
@@ -531,11 +529,6 @@ class Group:
         for creditor in xrange(self.N):
             balances_final[creditor] += \
                     np.sum(self.paymat[:, creditor])
-        print "Initial / final personal balances [$]:"
-        for person in self.names:
-            balance_i = balances_init[self.indices[person]]
-            balance_f = balances_final[self.indices[person]]
-            print "%s:  %.2f / %.2f" %(person, balance_i, balance_f)
         # We'll accept a change of less than a penny or so in
         # total balance for an individual.
         tol = 1e-3
@@ -545,8 +538,6 @@ class Group:
                 raise Exception("Simplify() script changed the " +
                     "individual balances. There's a problem " +
                     "with the algorithm.")
-        print "Simplified:"
-        print self.paymat
         for debtor in xrange(self.N):
             for creditor in xrange(self.N):
                 debt = self.paymat[debtor, creditor]
