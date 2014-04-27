@@ -36,7 +36,7 @@ group = group_obj.Group(names)
 # Jon covered everyone's tickets to the game
 group.store_new_transaction("Jon",
         invlvd="all", total=75,
-        comment="s")
+        comment="Cheap tickets to the baseball game")
 
 # Sue paid for lunch with just her and Joe
 group.store_new_transaction("Sue",
@@ -60,5 +60,5 @@ the output to the example file above is simply:
     Sue owes Jon $19.25
     Joe owes Jon $0.75
 
-This program reduces complicated groups situations to the
+This program reduces complicated group situations to the
 smallest possible number of transactions to balance everyone.
