@@ -1,26 +1,26 @@
 INTRO
 =====
-GroupFin is a Python program to help deal with money and finances in a
-group. This includes tracking individuals' expenses, so that at the
-end, you can properly balance. This program also simplifies the final
-result into the smallest number of lowest-amount transactions required
-to square everyone up.
+GroupFinance is a Python program to help deal with money and finances
+in a group. This includes tracking individuals' expenses, so that at
+the end, you can properly balance. This program also simplifies the
+final result into the smallest number of lowest-amount transactions
+required to square everyone up.
 
 QUICK START
 ===========
-To begin, first create a file based off the example file.
+To use GroupFinance, you will need Python 2 and NumPy installed.
+To begin, first create a transaction file based on the example file.
 
     cp exapmle_input.py myGroupFin.py
 
 This file will include a list of names of the people in the group.
-Then, add transactions to the file. Finally, to see the simplified way
+Then, add transactions to the file. Finally, to see a simplified way
 to square up the group, simply run the file
 
     python2 myGroupFin.py
 
-EXAMPLE FILE
-============
-
+EXAMPLE
+=======
 Here's an example of what a very simple transactions file might look
 like. For more detail about options, check out the example_input.py
 file.
