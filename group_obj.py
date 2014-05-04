@@ -60,14 +60,14 @@ class Group:
             raise Exception("invlvd must either  be 'all' or list of names")
         # Basic input checks for total transaction amount
         if type(payers) == dict:
-            payed_total = sum(payers.values())
-            if total and abs(payed_total - total) > 1e-3:
+            paid_total = sum(payers.values())
+            if total and abs(paid_total - total) > 1e-3:
                 print "\n\ncomment:", comment, "\n\n"
-                raise Exception("Payed total doesn't match transaction total")
-            total = payed_total
-            if split and abs(payed_total - sum(split.values())) > 1e-3:
+                raise Exception("Paid total doesn't match transaction total")
+            total = paid_total
+            if split and abs(paid_total - sum(split.values())) > 1e-3:
                 print "\n\ncomment:", comment, "\n\n"
-                raise Exception("Payed total doesn't match split total")
+                raise Exception("Paid total doesn't match split total")
         if split:
             split_total = sum(split.values())
             if total and abs(split_total - total) > 1e-3:
