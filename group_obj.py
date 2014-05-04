@@ -1,5 +1,3 @@
-import numpy as np
-
 class Group:
     """
     This defines a class that will keep track of a group's
@@ -287,54 +285,6 @@ class Group:
         np.delete(self.paymat, name, axis=0)
         np.delete(self.paymat, name, axis=1)
 
-    def add_transaction(self, payers, split):
-        """
-        Add a transaction to the current paymat -- note that the
-        payers are owed by the split members (which may include
-        the payers).
-        * payers -- dict {str:float} -- dictionary of payers,
-            amounts.
-        * split -- dict {str:float} -- the people involved in the
-            transaction, names, amounts.
-        """
-        # Figure out how much every person in the party owes/is
-        # owed for this transaction.
-        ind_contrs = np.zeros(self.N)
-        for name in self.names:
-            name_ind = self.indices[name]
-            if name in payers.keys():
-                ind_contrs[name_ind] += payers[name]
-            if name in split.keys():
-                ind_contrs[name_ind] -= split[name]
-        # Indices of those owed and those owing.
-        owed_inds = np.nonzero(ind_contrs > 0)
-        owing_inds = np.nonzero(ind_contrs < 0)
-        # Sanity check. Total owed should be neg of total owing:
-        total_owed = sum(ind_contrs[owed_inds])
-        total_owing = sum(ind_contrs[owing_inds])
-        if abs(total_owed + total_owing) > 1e-3:
-            print "Payers:", payers
-            print "Split:", split
-            raise Exception("Something wrong with transaction.")
-        # Figure out the ratios in which the people who are owed
-        # should be paid.
-        owed_ratios = np.zeros(self.N)
-        for owed in owed_inds:
-            owed_ratios[owed] = ind_contrs[owed]/float(total_owed)
-        # Sanity check. Total owed ratios should sum to one.
-        if abs(sum(owed_ratios) - 1) > 1e-3:
-            print "Error info:", sum(owed_ratios)
-            print "Payers:", payers
-            print "Split:", split
-            raise Exception("Error in transaction assignment.")
-        # Now, assign transactions to a payment matrix such that
-        # everyone will be square from this transaction.
-        for owing in owing_inds:
-            debt = -ind_contrs[owing]
-            for owed in owed_inds:
-                self.paymat[owing, owed] += debt*owed_ratios[owed]
-        return
-
     def simplify(self):
         """
         This function makes a paymat and reduces it such that there
@@ -346,210 +296,37 @@ class Group:
         George -- this can be reduced to three payments rather
         than four).
         """
-        # Set up numpy printing options
-        np.set_printoptions(precision=3, suppress=True)
-        # First, generate an unsimplified payment matrix from the
-        # list of transactions.
-        # First, make the matrix to be filled in.
-        self.paymat = np.array( np.zeros((self.N,self.N)) )
-        # Populate it with the saved transactions.
-        for transaction in self.transactions:
-            self.add_transaction(
-                    transaction["payers"],
-                    transaction["split"])
-
         # Make a list of total payments debts and credits per
         # person initially. This will verify the simplification
         # process didn't actually change anything.
-        balances_init = np.array( np.zeros((self.N)) )
-        for debtor in xrange(self.N):
-            balances_init[debtor] -= \
-                    np.sum(self.paymat[debtor, :])
-        for creditor in xrange(self.N):
-            balances_init[creditor] += \
-                    np.sum(self.paymat[:, creditor])
-
-        # Get rid of multi-multi-payments (A and B both pay C
-        # and D).
-        multis_present = 1
-        count = 1
-        max_count = 100
-        while multis_present and count < max_count:
-            # Assume the previous loop took care of the last one.
-            multis_present = 0
-            for debtor1 in xrange(self.N):
-                # This debtor's creditors.
-                creditors1 = np.nonzero(self.paymat[debtor1, :])[0]
-                # Check to see if this debtor shares 2 creditors with
-                # any subsequent debtor. If so, then it can be
-                # simplified.
-                for debtor2 in xrange(self.N):
-                    # Not concerned if debtor shares creditors
-                    # with self.
-                    if debtor2 == debtor1:
-                        continue # with the next debtor
-                    # This debtor's creditors.
-                    creditors2 = np.nonzero(self.paymat[debtor2, :])[0]
-                    # Generate a list of shared creditors?
-                    shared = np.intersect1d(creditors1,
-                            creditors2)
-                    # If there are at least 2 shared.
-                    if len(shared) >= 2:
-                        # There are still multi's around.
-                        multis_present = 1
-                        # Deal with the first 2 shared creditors.
-                        shared1 = shared[0]
-                        shared2 = shared[1]
-                        # Find the lowest debt in the 'rectangle'.
-                        min_flag = np.argmin( np.array([
-                                self.paymat[debtor1, shared1],
-                                self.paymat[debtor1, shared2],
-                                self.paymat[debtor2, shared1],
-                                self.paymat[debtor2, shared2]]) )
-                        # Get rid of one of them
-                        if min_flag == 0:
-                            adj = self.paymat[debtor1, shared1]
-                            self.paymat[debtor1, shared1] = 0
-                            self.paymat[debtor1, shared2] += adj
-                            self.paymat[debtor2, shared1] += adj
-                            self.paymat[debtor2, shared2] -= adj
-                        elif min_flag == 1:
-                            adj = self.paymat[debtor1, shared2]
-                            self.paymat[debtor1, shared1] += adj
-                            self.paymat[debtor1, shared2] = 0
-                            self.paymat[debtor2, shared1] -= adj
-                            self.paymat[debtor2, shared2] += adj
-                        elif min_flag == 2:
-                            adj = self.paymat[debtor2, shared1]
-                            self.paymat[debtor1, shared1] += adj
-                            self.paymat[debtor1, shared2] -= adj
-                            self.paymat[debtor2, shared1] = 0
-                            self.paymat[debtor2, shared2] += adj
-                        elif min_flag == 3:
-                            adj = self.paymat[debtor2, shared2]
-                            self.paymat[debtor1, shared1] -= adj
-                            self.paymat[debtor1, shared2] += adj
-                            self.paymat[debtor2, shared1] += adj
-                            self.paymat[debtor2, shared2] = 0
-            count += 1
-        if count == max_count:
-            # Do we want to do anything here?
-            pass
-
-        # Systematically go through and eliminate all chains.
-        # Consider each debtor.
-        for debtor in xrange(self.N):
-            # Look at the people they may owe money to -- their
-            # creditors.
-            for creditor in xrange(self.N):
-                # If debtor owes creditor and creditor owes other
-                # people money.
-                # List of people creditor could owe to.
-                creditors_creditors = [i for i in xrange(self.N)
-                        if i != creditor]
-                creditors_total_debt = np.sum(self.paymat[creditor,
-                    creditors_creditors])
-                if (self.paymat[debtor, creditor]
-                        and creditors_total_debt > 0):
-                    debt1 = self.paymat[debtor, creditor]
-                    # If the creditor owes (in total) less than
-                    # the debtor owes him/her, cancel all the
-                    # creditor's debt to his/her creditors.
-                    if creditors_total_debt < debt1:
-                        # The debtor will owe the creditor the
-                        # original amount less the sum of the
-                        # creditor's debts.
-                        self.paymat[debtor, creditor] \
-                                -= creditors_total_debt
-                        # Have debtor pick up the creditor's
-                        # debts.
-                        for creditors_creditor in \
-                                creditors_creditors:
-                            # Debter picks up creditor's debt.
-                            self.paymat[debtor, creditors_creditor] += \
-                                    self.paymat[creditor, creditors_creditor]
-                            # Creditor is no longer in debt.
-                            self.paymat[creditor, creditors_creditor] = 0
-                    # Else, cancel as much as can be canceled,
-                    # because the creditor owes more than the
-                    # debtor owes the creditor.
-                    else:
-                        creditors_creditor = 0
-                        # Don't deal with lingering
-                        # self-payments.
-                        if creditors_creditor == creditor:
-                            creditors_creditor += 1
-                        while self.paymat[debtor, creditor] > 0:
-                            # Useful to have these abbreviated:
-                            debt1 = self.paymat[debtor, creditor]
-                            debt2 = self.paymat[creditor,
-                                    creditors_creditor]
-                            # If the amount owed to creditor is
-                            # more than creditor's current debt in
-                            # consideration, have the debtor absorb
-                            # the whole thing.
-                            if debt1 > debt2:
-                                # Debter owes creditor less.
-                                self.paymat[debtor, creditor] -= debt2
-                                # Debter picks up creditor's debt.
-                                self.paymat[debtor,
-                                        creditors_creditor] += debt2
-                                # Creditor is no longer in debt.
-                                self.paymat[creditor,
-                                        creditors_creditor] = 0
-                            # Otherwise, debtor will just pick up
-                            # part of it.
-                            else:
-                                # Creditor owes less by amount debtor
-                                # owed creditor.
-                                self.paymat[creditor,
-                                        creditors_creditor] -= debt1
-                                # Debter picks up as much
-                                # of creditor's debt as he owed
-                                # creditor.
-                                self.paymat[debtor,
-                                        creditors_creditor] += debt1
-                                # Debter no longer owes creditor.
-                                self.paymat[debtor, creditor] = 0
-                            # Increment the person we're looking at
-                            # creditor owing.
-                            creditors_creditor += 1
-
-        # Eliminate self-pays
-        for person in xrange(self.N):
-            self.paymat[person, person] = 0
-
-        # The final list of balances. A person's total received
-        # payments - debts should be the same before and after
-        # simplification.
-        balances_final = np.array( np.zeros((self.N)) )
-        for debtor in xrange(self.N):
-            balances_final[debtor] -= \
-                    np.sum(self.paymat[debtor, :])
-        for creditor in xrange(self.N):
-            balances_final[creditor] += \
-                    np.sum(self.paymat[:, creditor])
-        # We'll accept a change of less than a penny or so in
-        # total balance for an individual.
-        tol = 1e-3
-        for person in xrange(self.N):
-            if abs(balances_init[person] - \
-                    balances_final[person]) > tol:
-                raise Exception("Simplify() script changed the " +
-                    "individual balances. There's a problem " +
-                    "with the algorithm.")
-        for debtor in xrange(self.N):
-            for creditor in xrange(self.N):
-                debt = self.paymat[debtor, creditor]
-                if debt:
-                    # Find names corresponding to debtor,
-                    # creditor indices.
-                    for (name, indx) in self.indices.iteritems():
-                        if indx == debtor:
-                            dname = name
-                        elif indx == creditor:
-                            cname = name
-                    print ("{debtor_name} owes {creditor_name} "
-                            "${debtval:.2f}").format(debtor_name=dname,
-                            creditor_name=cname, debtval=debt)
-
+        balances = []
+        for name in self.names:
+            debt = self.get_persons_total_debt(name)
+            balances.append((name, -debt))
+        balances.sort(key=lambda person: person[1], reverse=True)
+        names_sorted = [balances[i][0] for i in range(len(balances))]
+        balances_sorted = [balances[i][1] for i in range(len(balances))]
+        if abs(sum(balances_sorted)) > 1e-4:
+            print sum(balances_sorted)
+            raise Exception("Waat? credits/debts don't balance!")
+        for creditor_indx, name in enumerate(names_sorted):
+            creditor = names_sorted[creditor_indx]
+            # Start from person issuing most credit
+            while abs(balances_sorted[creditor_indx]) > 1e-3:
+                # Work our way up from the back of line to find the
+                # last person still in debt
+                tmplist = [j for
+                    j, x in enumerate(reversed(balances_sorted))
+                    if abs(x) > 1e-3]
+                debtor_indx = self.N  - next((j for
+                    j, x in enumerate(reversed(balances_sorted))
+                    if abs(x) > 1e-3), None) - 1
+                debtor = names_sorted[debtor_indx]
+                creditor_bal = balances_sorted[creditor_indx]
+                debtor_bal = balances_sorted[debtor_indx]
+                transvalue = min(creditor_bal, abs(debtor_bal))
+                balances_sorted[creditor_indx] -= transvalue
+                balances_sorted[debtor_indx] += transvalue
+                print ("{debtor_name} owes {creditor_name} "
+                        "${debtval:.2f}").format(debtor_name=debtor,
+                        creditor_name=creditor, debtval=transvalue)
