@@ -23,7 +23,7 @@ class Group:
         if self.N < 2:
             raise Exception("Why use this for only one person?")
         self.indices = {}
-        for indx in xrange(self.N):
+        for indx in range(self.N):
             self.indices[self.names[indx]] = indx
         # Store a list of transactions. This will be a list of
         # dictionaries.
@@ -47,35 +47,35 @@ class Group:
 
         # Basic input checks for types, sufficiency
         if type(payers) not in [dict, str]:
-            print "\n\ncomment:", comment, "\n\n"
+            print("\n\ncomment:", comment, "\n\n")
             raise Exception("payer(s) must be a string or dictionary")
         if split and type(split) != dict:
-            print "\n\ncomment:", comment, "\n\n"
+            print("\n\ncomment:", comment, "\n\n")
             raise Exception("split must be a dictionary")
         if (split and invlvd) or (not split and not invlvd):
-            print "\n\ncomment:", comment, "\n\n"
+            print("\n\ncomment:", comment, "\n\n")
             raise Exception("must specify EITHER split or list of involved")
         if invlvd and type(invlvd) not in [str, list]:
-            print "\n\ncomment:", comment, "\n\n"
+            print("\n\ncomment:", comment, "\n\n")
             raise Exception("invlvd must either  be 'all' or list of names")
         # Basic input checks for total transaction amount
         if type(payers) == dict:
             paid_total = sum(payers.values())
             if total and abs(paid_total - total) > 1e-3:
-                print "\n\ncomment:", comment, "\n\n"
+                print("\n\ncomment:", comment, "\n\n")
                 raise Exception("Paid total doesn't match transaction total")
             total = paid_total
             if split and abs(paid_total - sum(split.values())) > 1e-3:
-                print "\n\ncomment:", comment, "\n\n"
+                print("\n\ncomment:", comment, "\n\n")
                 raise Exception("Paid total doesn't match split total")
         if split:
             split_total = sum(split.values())
             if total and abs(split_total - total) > 1e-3:
-                print "\n\ncomment:", comment, "\n\n"
+                print("\n\ncomment:", comment, "\n\n")
                 raise Exception("Split total doesn't match transaction total")
             total = split_total
         if not total:
-            print "\n\ncomment:", comment, "\n\n"
+            print("\n\ncomment:", comment, "\n\n")
             raise Exception("Total amount must be specified somehow!")
 
         # First deal with the payer and make it a dictionary of
@@ -84,11 +84,11 @@ class Group:
             payers = {payers : total}
         # Check payers to make sure they're actually people in
         # the group
-        for payer in payers.iterkeys():
+        for payer in payers:
             if payer not in self.names:
-                print "group names:", self.names
-                print "payer:", payer
-                print "comment:", comment
+                print("group names:", self.names)
+                print("payer:", payer)
+                print("comment:", comment)
                 raise Exception("The above transaction involves" +
                         " payer(s) who aren't in the group")
 
@@ -98,9 +98,9 @@ class Group:
             # people in the group
             for person in split.iterkeys():
                 if person not in self.names:
-                    print "group names:", self.names
-                    print "split:", split
-                    print "comment:", comment
+                    print("group names:", self.names)
+                    print("split:", split)
+                    print("comment:", comment)
                     raise Exception("The above transaction involves"
                             +" people in the split who aren't in"
                             +" the group")
@@ -133,11 +133,11 @@ class Group:
             split[person] = debt_per_person
         # Run a check to make sure they're all actually
         # people in the group
-        for person in split.iterkeys():
+        for person in split:
             if person not in self.names:
-                print "group names:", self.names
-                print "split:", split
-                print "comment:", comment
+                print("group names:", self.names)
+                print("split:", split)
+                print("comment:", comment)
                 raise Exception("The above transaction involves"
                         +" people in the split who aren't in"
                         +" the group")
@@ -307,7 +307,7 @@ class Group:
         names_sorted = [balances[i][0] for i in range(len(balances))]
         balances_sorted = [balances[i][1] for i in range(len(balances))]
         if abs(sum(balances_sorted)) > 1e-4:
-            print sum(balances_sorted)
+            print(sum(balances_sorted))
             raise Exception("Waat? credits/debts don't balance!")
         for creditor_indx, name in enumerate(names_sorted):
             creditor = names_sorted[creditor_indx]
@@ -327,6 +327,6 @@ class Group:
                 transvalue = min(creditor_bal, abs(debtor_bal))
                 balances_sorted[creditor_indx] -= transvalue
                 balances_sorted[debtor_indx] += transvalue
-                print ("{debtor_name} owes {creditor_name} "
+                print (("{debtor_name} owes {creditor_name} "
                         "${debtval:.2f}").format(debtor_name=debtor,
-                        creditor_name=creditor, debtval=transvalue)
+                        creditor_name=creditor, debtval=transvalue))
