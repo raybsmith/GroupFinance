@@ -8,7 +8,7 @@ required to square everyone up.
 
 QUICK START
 ===========
-To use GroupFinance, you will need Python 2 and NumPy installed.
+To use GroupFinance, you will need Python (2 or 3) installed.
 To begin, first create a transaction file based on the example file.
 
     cp exapmle_input.py myGroupFin.py
@@ -17,7 +17,7 @@ This file will include a list of names of the people in the group.
 Then, add transactions to the file. Finally, to see a simplified way
 to square up the group, simply run the file
 
-    python2 myGroupFin.py
+    python myGroupFin.py
 
 EXAMPLE
 =======
