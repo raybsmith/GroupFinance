@@ -96,7 +96,7 @@ class Group:
         if split:
             # Run a check to make sure they're all actually
             # people in the group
-            for person in split.iterkeys():
+            for person in split:
                 if person not in self.names:
                     print("group names:", self.names)
                     print("split:", split)
@@ -187,7 +187,7 @@ class Group:
         # have a negatives in our split vector.
         if old_debt is not None:
             split = {}
-            for (name, amount) in old_debt.iteritems():
+            for (name, amount) in old_debt.items():
                 split[name] = -amount
             # Now that it's set up, store this as a transaction.
             self.store_new_transaction(
