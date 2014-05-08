@@ -29,6 +29,11 @@ import group_obj
 #
 # Note, if payers is a dictionary, and a split is defined for payment,
 # then the sums must be equal.
+#
+# Finally, call the simplify method, either without an argument (to
+# distribute transactions among the group and keep amounts small) or
+# with a person's name as argument, so s/he will act as the "bank" for
+# everyone.
 
 ExmplGroup = group_obj.Group(names=["Jon", "Sue", "Joe", "Beth", "Jane"])
 # Jon's total shared group expenses, to be shared equally among
@@ -53,6 +58,13 @@ ExmplGroup.store_new_transaction({"Jane" : 15, "Beth" : 25},
 ExmplGroup.store_new_transaction("Jane",
         invlvd="all others", total=55,
         comment="Dinner out on Saturday")
-#for transaction in ExmplGroup.transactions:
-#    print transaction
+
+# Print balancing lists of transactions
+# Distributing transactions
 ExmplGroup.simplify()
+print
+# With Jane as "bank"
+ExmplGroup.simplify("Jane")
+print
+# With Jon as "bank"
+ExmplGroup.simplify("Jon")

@@ -154,7 +154,7 @@ class Group:
                 total_debt += transaction["split"][name]
         return total_debt
 
-    def simplify(self):
+    def simplify(self, bank=None):
         """
         This function takes the current list of transactions and
         reduces them to a simplified set of payments to be made to
@@ -165,33 +165,49 @@ class Group:
         # person initially. This will verify the simplification
         # process didn't actually change anything.
         balances = []
+        baldict = {}
         for name in self.names:
             debt = self.get_persons_total_debt(name)
             balances.append((name, -debt))
-        balances.sort(key=lambda person: person[1], reverse=True)
-        names_sorted = [balances[i][0] for i in range(len(balances))]
-        balances_sorted = [balances[i][1] for i in range(len(balances))]
-        if abs(sum(balances_sorted)) > 1e-4:
-            print(sum(balances_sorted))
-            raise Exception("Waat? credits/debts don't balance!")
-        for creditor_indx, name in enumerate(names_sorted):
-            creditor = names_sorted[creditor_indx]
-            # Start from person issuing most credit
-            while abs(balances_sorted[creditor_indx]) > 1e-3:
-                # Work our way up from the back of line to find the
-                # last person still in debt
-                tmplist = [j for
-                    j, x in enumerate(reversed(balances_sorted))
-                    if abs(x) > 1e-3]
-                debtor_indx = len(self.names)  - next((j for
-                    j, x in enumerate(reversed(balances_sorted))
-                    if abs(x) > 1e-3), None) - 1
-                debtor = names_sorted[debtor_indx]
-                creditor_bal = balances_sorted[creditor_indx]
-                debtor_bal = balances_sorted[debtor_indx]
-                transvalue = min(creditor_bal, abs(debtor_bal))
-                balances_sorted[creditor_indx] -= transvalue
-                balances_sorted[debtor_indx] += transvalue
-                print (("{debtor_name} owes {creditor_name} "
-                        "${debtval:.2f}").format(debtor_name=debtor,
-                        creditor_name=creditor, debtval=transvalue))
+            baldict[name] = -debt
+        if bank:
+            if bank not in baldict:
+                raise Exception("Bank person must be in group")
+            for person in self.names:
+                if person != bank:
+                    if baldict[person] > 0:
+                        print (("{bank} owes {creditor} "
+                            "${val:.2f}").format(bank=bank,
+                                creditor=person, val=baldict[person]))
+                    else:
+                        print (("{debtor} owes {bank} "
+                            "${val:.2f}").format(bank=bank,
+                                debtor=person, val=abs(baldict[person])))
+        else:
+            balances.sort(key=lambda person: person[1], reverse=True)
+            names_sorted = [balances[i][0] for i in range(len(balances))]
+            balances_sorted = [balances[i][1] for i in range(len(balances))]
+            if abs(sum(balances_sorted)) > 1e-4:
+                print(sum(balances_sorted))
+                raise Exception("Waat? credits/debts don't balance!")
+            for creditor_indx, name in enumerate(names_sorted):
+                creditor = names_sorted[creditor_indx]
+                # Start from person issuing most credit
+                while abs(balances_sorted[creditor_indx]) > 1e-3:
+                    # Work our way up from the back of line to find the
+                    # last person still in debt
+                    tmplist = [j for
+                        j, x in enumerate(reversed(balances_sorted))
+                        if abs(x) > 1e-3]
+                    debtor_indx = len(self.names)  - next((j for
+                        j, x in enumerate(reversed(balances_sorted))
+                        if abs(x) > 1e-3), None) - 1
+                    debtor = names_sorted[debtor_indx]
+                    creditor_bal = balances_sorted[creditor_indx]
+                    debtor_bal = balances_sorted[debtor_indx]
+                    transvalue = min(creditor_bal, abs(debtor_bal))
+                    balances_sorted[creditor_indx] -= transvalue
+                    balances_sorted[debtor_indx] += transvalue
+                    print (("{debtor_name} owes {creditor_name} "
+                            "${debtval:.2f}").format(debtor_name=debtor,
+                            creditor_name=creditor, debtval=transvalue))

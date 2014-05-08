@@ -3,8 +3,9 @@ INTRO
 GroupFinance is a Python program to help deal with money and finances
 in a group. This includes tracking individuals' expenses, so that at
 the end, you can properly balance. This program also simplifies the
-final result into the smallest number of lowest-amount transactions
-required to square everyone up.
+final result to the smallest number of transactions to balance
+everyone. This can be done either keeping transaction amounts small or
+having one person act as "bank".
 
 QUICK START
 ===========
@@ -60,5 +61,3 @@ the output to the example file above is simply:
     Sue owes Jon $19.25
     Joe owes Jon $0.75
 
-This program reduces complicated group situations to the
-smallest possible number of transactions to balance everyone.
