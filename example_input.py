@@ -38,26 +38,31 @@ import group_obj
 ExmplGroup = group_obj.Group(names=["Jon", "Sue", "Joe", "Beth", "Jane"])
 # Jon's total shared group expenses, to be shared equally among
 # everyone (including Jon).
-ExmplGroup.store_new_transaction("Jon",
-        invlvd="all", total=198.13,
-        comment="Jon's total group expenses")
+ExmplGroup.store_new_transaction(
+    "Jon",
+    invlvd="all", total=198.13,
+    comment="Jon's total group expenses")
 # Sue owes Beth from cash loan.
-ExmplGroup.store_new_transaction("Beth",
-        invlvd=["Sue"], total=32,
-        comment="Beth loaned Sue money")
+ExmplGroup.store_new_transaction(
+    "Beth",
+    invlvd=["Sue"], total=32,
+    comment="Beth loaned Sue money")
 # Joe and Sue paid for a dinner with Joe, Sue, and Jane.
-ExmplGroup.store_new_transaction({"Joe" : 20, "Sue" : 35},
-        invlvd=["Joe", "Sue", "Jane"],
-        comment="Dinner out on Friday")
+ExmplGroup.store_new_transaction(
+    {"Joe": 20, "Sue": 35},
+    invlvd=["Joe", "Sue", "Jane"],
+    comment="Dinner out on Friday")
 # Jane and Beth paid for a dinner with Jane, Beth, and Jon; Jon got
 # dessert
-ExmplGroup.store_new_transaction({"Jane" : 15, "Beth" : 25},
-        split={"Jane" : 10, "Beth" : 10, "Jon" : 20},
-        comment="Dinner out on Saturday")
+ExmplGroup.store_new_transaction(
+    {"Jane": 15, "Beth": 25},
+    split={"Jane": 10, "Beth": 10, "Jon": 20},
+    comment="Dinner out on Saturday")
 # Jane loaned the rest of the group money for show tickets
-ExmplGroup.store_new_transaction("Jane",
-        invlvd="all others", total=55,
-        comment="Dinner out on Saturday")
+ExmplGroup.store_new_transaction(
+    "Jane",
+    invlvd="all others", total=55,
+    comment="Dinner out on Saturday")
 
 # Print balancing lists of transactions
 # Distributing transactions
