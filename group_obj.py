@@ -18,8 +18,7 @@ class Group:
         # dictionaries.
         self.transactions = []
 
-    def store_new_transaction(self, payers, split=None, invlvd=None,
-            total=None, comment="None"):
+    def store_new_transaction(self, payers, split=None, invlvd=None, total=None, comment="None"):
         """
         Stores a new transaction in which the payer(s) purchased
         something for a group of people.
@@ -38,7 +37,7 @@ class Group:
         if type(payers) not in [dict, str]:
             print("\n\ncomment:", comment, "\n\n")
             raise Exception("payer(s) must be a string or dictionary")
-        if split and type(split) != dict:
+        if split and not isinstance(split, dict):
             print("\n\ncomment:", comment, "\n\n")
             raise Exception("split must be a dictionary")
         if (split and invlvd) or (not split and not invlvd):
@@ -48,7 +47,7 @@ class Group:
             print("\n\ncomment:", comment, "\n\n")
             raise Exception("invlvd must either  be 'all' or list of names")
         # Basic input checks for total transaction amount
-        if type(payers) == dict:
+        if isinstance(payers, dict):
             paid_total = sum(payers.values())
             if total and abs(paid_total - total) > 1e-3:
                 print("\n\ncomment:", comment, "\n\n")
@@ -69,8 +68,8 @@ class Group:
 
         # First deal with the payer and make it a dictionary of
         # payers.
-        if type(payers) == str:
-            payers = {payers : total}
+        if isinstance(payers, str):
+            payers = {payers: total}
         # Check payers to make sure they're actually people in
         # the group
         for payer in payers:
@@ -78,8 +77,7 @@ class Group:
                 print("group names:", self.names)
                 print("payer:", payer)
                 print("comment:", comment)
-                raise Exception("The above transaction involves" +
-                        " payer(s) who aren't in the group")
+                raise Exception("The above transaction involves payer(s) who aren't in the group")
 
         # Now if a full split was given, store it.
         if split:
@@ -90,14 +88,14 @@ class Group:
                     print("group names:", self.names)
                     print("split:", split)
                     print("comment:", comment)
-                    raise Exception("The above transaction involves"
-                            +" people in the split who aren't in"
-                            +" the group")
+                    raise Exception(
+                        "The above transaction involves people in the split "
+                        "who aren't in the group")
             # Now, store the transaction and be done with it.
             new_transaction = {
-                    "payers" : payers,
-                    "split" : split,
-                    "comment" : comment}
+                    "payers": payers,
+                    "split": split,
+                    "comment": comment}
             self.transactions.append(new_transaction)
             return
 
@@ -108,8 +106,7 @@ class Group:
         if invlvd == "all":
             invlvd = self.names
         elif invlvd == "all others":
-            invlvd = [name for name in self.names if name not in
-                    payers.keys()]
+            invlvd = [name for name in self.names if name not in payers.keys()]
         # We have all the information we need to make an even
         # split, denoted by the fact that we were given a list
         # of involved people and a transaction total.
@@ -127,13 +124,13 @@ class Group:
                 print("group names:", self.names)
                 print("split:", split)
                 print("comment:", comment)
-                raise Exception("The above transaction involves"
-                        +" people in the split who aren't in"
-                        +" the group")
+                raise Exception(
+                    "The above transaction involves people in the split "
+                    "who aren't in the group")
         new_transaction = {
-                "payers" : payers,
-                "split" : split,
-                "comment" : comment}
+                "payers": payers,
+                "split": split,
+                "comment": comment}
         self.transactions.append(new_transaction)
         return
 
@@ -176,13 +173,9 @@ class Group:
             for person in self.names:
                 if person != bank:
                     if baldict[person] > 0:
-                        print (("{bank} owes {creditor} "
-                            "${val:.2f}").format(bank=bank,
-                                creditor=person, val=baldict[person]))
+                        print(f"{bank} owes {person} ${baldict[person]:.2f}")
                     else:
-                        print (("{debtor} owes {bank} "
-                            "${val:.2f}").format(bank=bank,
-                                debtor=person, val=abs(baldict[person])))
+                        print(f"{person} owes {bank} ${abs(baldict[person]):.2f}")
         else:
             balances.sort(key=lambda person: person[1], reverse=True)
             names_sorted = [balances[i][0] for i in range(len(balances))]
@@ -196,18 +189,14 @@ class Group:
                 while abs(balances_sorted[creditor_indx]) > 1e-3:
                     # Work our way up from the back of line to find the
                     # last person still in debt
-                    tmplist = [j for
-                        j, x in enumerate(reversed(balances_sorted))
-                        if abs(x) > 1e-3]
-                    debtor_indx = len(self.names)  - next((j for
-                        j, x in enumerate(reversed(balances_sorted))
-                        if abs(x) > 1e-3), None) - 1
+                    debtor_indx = (len(self.names) - next(
+                        (j for j, x in enumerate(reversed(balances_sorted))
+                            if abs(x) > 1e-3),
+                        None) - 1)
                     debtor = names_sorted[debtor_indx]
                     creditor_bal = balances_sorted[creditor_indx]
                     debtor_bal = balances_sorted[debtor_indx]
                     transvalue = min(creditor_bal, abs(debtor_bal))
                     balances_sorted[creditor_indx] -= transvalue
                     balances_sorted[debtor_indx] += transvalue
-                    print (("{debtor_name} owes {creditor_name} "
-                            "${debtval:.2f}").format(debtor_name=debtor,
-                            creditor_name=creditor, debtval=transvalue))
+                    print(f"{debtor} owes {creditor} ${transvalue:.2f}")

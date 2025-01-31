@@ -9,7 +9,7 @@ having one person act as "bank".
 
 QUICK START
 ===========
-To use GroupFinance, you will need Python (2 or 3) installed.
+To use GroupFinance, you will need Python installed.
 To begin, first create a transaction file based on the example file.
 
     cp exapmle_input.py myGroupFin.py
